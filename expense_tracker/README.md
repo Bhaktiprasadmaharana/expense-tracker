@@ -1,32 +1,46 @@
-<<<<<<< HEAD
 # Expense Tracker (Django)
 
 A simple expense tracking web application built with Django.
 
-## Features
+---
+
+## 🚀 Features
 - User authentication (Login / Signup)
 - Add, edit, delete expenses
 - Monthly reports
 - Category tracking
 - Password reset system
+- Admin panel access
 
-## Tech Stack
+---
+
+## 🛠 Tech Stack
 - Python
 - Django
 - HTML
 - CSS
 - Bootstrap
 
-## How to Run
+---
+
+## 📦 Installation & Setup
 
 1. Clone the repository
+   git clone https://github.com/Bhaktiprasadmaharana/expense-tracker.git
+   cd expense-tracker
 2. Create virtual environment
-3. Install dependencies:
+   python -m venv venv
+   source venv/bin/activate   # Mac/Linux
+   venv\Scripts\activate      # Windows
+3. Install dependencies 
    pip install -r requirements.txt
-4. Run migrations:
+4. Run migrations
    python manage.py migrate
-5. Start server:
+5. Start the server
    python manage.py runserver
-=======
-# expense-tracker
->>>>>>> 29637b4363bfbec0c9513c395018416895804f05
+Visit: `http://127.0.0.1:8000/`
+
+---
+
+## 👨‍💻 Author
+Bhakti Prasad Maharana
