@@ -1,0 +1,24 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<h1>Categories</h1>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in category_summary %}
+            <tr>
+                <td>{{ item.category }}</td>
+                <td>₹ {{ item.total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="{% static 'tracker/css/style.css' %}" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <div class="dashboard-layout">
+      {% if user.is_authenticated %}
+      <aside class="sidebar">
+        <h2>💰 Tracker</h2>
+
+        <button class="toggle-btn" onclick="toggleSidebar()">
+          <i data-lucide="chevron-left" id="toggle-icon"></i>
+        </button>
+
+        <nav class="sidebar-nav">
+          <a href="{% url 'home' %}" class="nav-item">
+            <i data-lucide="layout-dashboard"></i>
+            <span class="nav-text">Dashboard</span>
+          </a>
+
+          <a href="{% url 'categories' %}" class="nav-item">
+            <i data-lucide="layers"></i>
+            <span class="nav-text">Categories</span>
+          </a>
+
+          <a href="{% url 'reports' %}" class="nav-item">
+            <i data-lucide="bar-chart-3"></i>
+            <span class="nav-text">Reports</span>
+          </a>
+
+          <div class="nav-item">
+            <i data-lucide="wallet"></i>
+            <span class="nav-text">₹ {{ total_expense }}</span>
+          </div>
+        </nav>
+
+        <!-- Logout at bottom -->
+        <form method="POST" action="{% url 'logout' %}" class="sidebar-logout">
+          {% csrf_token %}
+          <button type="submit">
+            <i data-lucide="log-out"></i>
+            <span class="nav-text">Logout</span>
+          </button>
+        </form>
+      </aside>
+      {% endif %}
+
+      <div class="main-content">{% block content %}{% endblock %}</div>
+    </div>
+    <script>
+      function toggleSidebar() {
+        const sidebar = document.querySelector(".sidebar");
+        const icon = document.getElementById("toggle-icon");
+
+        sidebar.classList.toggle("collapsed");
+
+        if (sidebar.classList.contains("collapsed")) {
+          icon.setAttribute("data-lucide", "chevron-right");
+        } else {
+          icon.setAttribute("data-lucide", "chevron-left");
+        }
+
+        lucide.createIcons();
+      }
+
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
