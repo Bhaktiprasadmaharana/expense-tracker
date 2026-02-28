@@ -1,0 +1,63 @@
+{% extends "tracker/base.html" %}
+{% block content %}
+
+<div class="dashboard-container">
+
+  <div class="card form-card">
+    <h3>Edit Record</h3>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="form-row">
+        <input type="text" name="person_name"
+               value="{{ debt.person_name }}" required />
+
+        <input type="number" step="0.01"
+               name="amount"
+               value="{{ debt.amount }}" required />
+      </div>
+
+      <div class="form-row">
+        <select name="type" required>
+          <option value="borrowed"
+            {% if debt.type == "borrowed" %}selected{% endif %}>
+            Borrowed (You Took)
+          </option>
+
+          <option value="lent"
+            {% if debt.type == "lent" %}selected{% endif %}>
+            Lent (You Gave)
+          </option>
+        </select>
+
+        <input type="text"
+               name="note"
+               value="{{ debt.note }}"
+               placeholder="Purpose" />
+      </div>
+
+      <div class="form-row status-row">
+        <label class="status-label">
+          <input type="checkbox" name="status"
+                 {% if debt.status %}checked{% endif %}>
+          Active Record (Uncheck if Cleared)
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          Update Record
+        </button>
+
+        <a href="{% url 'debt_list' %}" class="btn btn-secondary">
+            Cancel
+        </a>
+      </div>
+    </form>
+
+  </div>
+
+</div>
+
+{% endblock %}

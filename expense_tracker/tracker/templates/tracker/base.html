@@ -32,9 +32,17 @@
             <span class="nav-text">Reports</span>
           </a>
 
+          <a href="{% url 'debt_list' %}" class="nav-item">
+            <i data-lucide="hand-coins"></i>
+            <span class="nav-text">Borrow / Debt</span>
+          </a>
+
           <div class="nav-item">
             <i data-lucide="wallet"></i>
-            <span class="nav-text">₹ {{ total_expense }}</span>
+            <span class="nav-text wallet-amount">
+              <span class="rupee-icon">₹</span>
+              {{ sidebar_balance }}
+            </span>
           </div>
         </nav>
 

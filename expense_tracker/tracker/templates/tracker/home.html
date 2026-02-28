@@ -2,8 +2,11 @@
 
 {% block content %}
 
-<div class="page-header">
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
     <h1>Welcome, {{ request.user.username }} 👋</h1>
+    <a href="{% url 'debt_list' %}" class="btn btn-primary">
+        💳 Borrow / Debt Tracker
+    </a>
 </div>
 
 <!-- ===== SUMMARY CARDS ===== -->
@@ -113,6 +116,7 @@
             <option>Transport</option>
             <option>Bills</option>
             <option>Entertainment</option>
+            <option>Study</option>
             <option>Other</option>
         </select>
 
