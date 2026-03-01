@@ -4,7 +4,14 @@
   <head>
     <title>Expense Tracker</title>
     <link rel="stylesheet" href="{% static 'tracker/css/style.css' %}" />
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest">
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("{% static 'tracker/sw.js' %}")
+          .then(() => console.log("Service Worker Registered"));
+      }
+    </script>
+    <link rel="manifest" href="{% static 'tracker/manifest.json' %}" />
+    <meta name="theme-color" content="#2563eb" />
   </head>
   <body>
     <div class="dashboard-layout">
