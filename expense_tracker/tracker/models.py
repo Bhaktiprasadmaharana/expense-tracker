@@ -8,6 +8,7 @@ class Expense(models.Model):
         ('Transport', 'Transport'),
         ('Bills', 'Bills'),
         ('Entertainment', 'Entertainment'),
+        ('Study', 'Study'),
         ('Other', 'Other'),
     ]
 
@@ -21,6 +22,8 @@ class Expense(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = 'Expense'
+        verbose_name_plural = 'Expenses'
 
     def __str__(self):
         return f"{self.title} - {self.amount}"
@@ -51,6 +54,8 @@ class Debt(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = 'Debt'
+        verbose_name_plural = 'Debts'
 
     def __str__(self):
         return f"{self.person_name} ({self.type}) - ₹{self.amount}"
@@ -64,6 +69,8 @@ class DebtPayment(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = 'Debt Payment'
+        verbose_name_plural = 'Debt Payments'
 
     def __str__(self):
         return f"Payment of ₹{self.amount} for {self.debt.person_name}"

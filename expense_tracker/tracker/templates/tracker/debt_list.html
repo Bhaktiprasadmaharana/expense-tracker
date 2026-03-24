@@ -231,6 +231,7 @@
                 <span class="payment-date"
                   >({{ payment.created_at|date:"d M" }})</span
                 >
+                {% if edit_mode %}
                 <form
                   method="POST"
                   action="{% url 'delete_payment' payment.id %}"
@@ -239,6 +240,7 @@
                   {% csrf_token %}
                   <button type="submit" class="delete-payment">✕</button>
                 </form>
+                {% endif %}
               </div>
               {% endfor %}
             </div>

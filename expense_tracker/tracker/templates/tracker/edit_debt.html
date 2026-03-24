@@ -6,10 +6,10 @@
   <div class="card form-card">
     <h3>Edit Record</h3>
 
-    <form method="POST">
+    <form method="POST" class="responsive-form">
       {% csrf_token %}
 
-      <div class="form-row">
+      <div class="form-row mobile-stack">
         <input type="text" name="person_name"
                value="{{ debt.person_name }}" required />
 
@@ -18,7 +18,7 @@
                value="{{ debt.amount }}" required />
       </div>
 
-      <div class="form-row">
+      <div class="form-row mobile-stack">
         <select name="type" required>
           <option value="borrowed"
             {% if debt.type == "borrowed" %}selected{% endif %}>
@@ -45,7 +45,7 @@
         </label>
       </div>
 
-      <div class="form-actions">
+      <div class="form-actions mobile-stack">
         <button type="submit" class="btn-primary">
           Update Record
         </button>

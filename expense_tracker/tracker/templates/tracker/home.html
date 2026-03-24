@@ -2,11 +2,13 @@
 
 {% block content %}
 
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+<div class="page-header">
+<div class="header-flex">
     <h1>Welcome, {{ request.user.username }} 👋</h1>
     <a href="{% url 'debt_list' %}" class="btn btn-primary">
         💳 Borrow / Debt Tracker
     </a>
+</div>
 </div>
 
 <!-- ===== SUMMARY CARDS ===== -->
@@ -29,7 +31,7 @@
 
     <div class="stat-card">
         <p>This Month</p>
-        <h2>{{ expenses|length }}</h2>
+        <h2>₹ {{ this_month_total }}</h2>
     </div>
 
 </div>
@@ -64,6 +66,7 @@
         <a href="{% url 'home' %}" class="btn btn-outline-secondary">Reset</a>
     </form>
 
+    <div class="table-responsive">
     <table class="table">
         <thead>
             <tr>
@@ -83,11 +86,10 @@
                 <td>{{ expense.date }}</td>
                 <td>
                     <a href="{% url 'edit_expense' expense.pk %}" class="btn btn-outline-warning">Edit</a>
-                    <a href="{% url 'delete_expense' expense.pk %}" 
-                       class="btn btn-outline-danger"
-                       onclick="return confirm('Delete this expense?');">
-                       Delete
-                    </a>
+                    <form method="POST" action="{% url 'delete_expense' expense.pk %}" style="display:inline;" onsubmit="return confirm('Delete this expense?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">Delete</button>
+                    </form>
                 </td>
             </tr>
             {% empty %}
@@ -97,6 +99,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 
 </div>
 
@@ -109,6 +112,7 @@
 
         <input type="text" name="title" placeholder="Title" class="form-control" required>
         <input type="number" step="0.01" name="amount" placeholder="Amount" class="form-control" required>
+        <input type="date" name="date" class="form-control">
 
         <select name="category" class="form-select" required>
             <option value="">Select Category</option>

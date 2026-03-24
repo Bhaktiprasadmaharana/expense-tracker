@@ -6,7 +6,9 @@ from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from decimal import Decimal
+from django.utils import timezone
+
+from decimal import Decimal, InvalidOperation
 
 from .models import Expense, Debt, DebtPayment
 from .forms import CustomUserCreationForm
@@ -15,17 +17,33 @@ from .forms import CustomUserCreationForm
 @login_required
 def home(request):
     if request.method == "POST":
-        title = request.POST.get('title')
-        amount = request.POST.get('amount')
-        category = request.POST.get('category')
+        title = request.POST.get('title', '').strip()
+        amount_raw = request.POST.get('amount', '').strip()
+        category = request.POST.get('category', '').strip()
+        date_raw = request.POST.get('date', '').strip()
 
-        Expense.objects.create(
-            user=request.user,
-            title=title,
-            amount=amount,
-            category=category
-        )
+        # Validate inputs
+        if not title or not amount_raw or not category:
+            messages.error(request, "All fields are required.")
+            return redirect('home')
 
+        try:
+            amount = Decimal(amount_raw)
+            if amount <= 0:
+                raise ValueError
+        except (InvalidOperation, ValueError):
+            messages.error(request, "Please enter a valid positive amount.")
+            return redirect('home')
+
+        expense_kwargs = dict(user=request.user, title=title, amount=amount, category=category)
+        if date_raw:
+            try:
+                from datetime import date
+                expense_kwargs['date'] = date.fromisoformat(date_raw)
+            except ValueError:
+                pass  # fall back to default (today)
+
+        Expense.objects.create(**expense_kwargs)
         messages.success(request, "Expense added successfully.")
         return redirect('home')
 
@@ -56,12 +74,21 @@ def home(request):
         .dates('date', 'month', order='DESC')
     )
 
+    # Current month total for the stat card
+    now = timezone.now()
+    this_month_total = (
+        Expense.objects
+        .filter(user=request.user, date__year=now.year, date__month=now.month)
+        .aggregate(total=Sum('amount'))['total'] or 0
+    )
+
     return render(request, 'tracker/home.html', {
         'expenses': expenses,
         'total_expense': total_expense,
         'category_summary': category_summary,
         'available_months': available_months,
         'sidebar_balance': total_expense,
+        'this_month_total': this_month_total,
     })
 
 
@@ -70,9 +97,32 @@ def edit_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk, user=request.user)
 
     if request.method == "POST":
-        expense.title = request.POST.get('title')
-        expense.amount = request.POST.get('amount')
-        expense.category = request.POST.get('category')
+        title = request.POST.get('title', '').strip()
+        amount_raw = request.POST.get('amount', '').strip()
+        category = request.POST.get('category', '').strip()
+        date_raw = request.POST.get('date', '').strip()
+
+        if not title or not amount_raw or not category:
+            messages.error(request, "All fields are required.")
+            return redirect('edit_expense', pk=pk)
+
+        try:
+            amount = Decimal(amount_raw)
+            if amount <= 0:
+                raise ValueError
+        except (InvalidOperation, ValueError):
+            messages.error(request, "Please enter a valid positive amount.")
+            return redirect('edit_expense', pk=pk)
+
+        expense.title = title
+        expense.amount = amount
+        expense.category = category
+        if date_raw:
+            try:
+                from datetime import date
+                expense.date = date.fromisoformat(date_raw)
+            except ValueError:
+                pass
         expense.save()
         messages.success(request, "Expense updated successfully.")
         return redirect('home')
@@ -81,6 +131,7 @@ def edit_expense(request, pk):
 
 
 @login_required
+@require_POST
 def delete_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk, user=request.user)
     expense.delete()
@@ -154,12 +205,20 @@ def reports_view(request):
 @login_required
 def debt_list(request):
     if request.method == "POST":
-        person_name = request.POST.get("person_name")
-        amount = request.POST.get("amount")
-        debt_type = request.POST.get("type")
-        note = request.POST.get("note")
+        person_name = request.POST.get("person_name", "").strip()
+        amount_raw = request.POST.get("amount", "").strip()
+        debt_type = request.POST.get("type", "").strip()
+        note = request.POST.get("note", "").strip()
 
-        if person_name and amount and debt_type:
+        if person_name and amount_raw and debt_type:
+            try:
+                amount = Decimal(amount_raw)
+                if amount <= 0:
+                    raise ValueError
+            except (InvalidOperation, ValueError):
+                messages.error(request, "Please enter a valid positive amount.")
+                return redirect("debt_list")
+
             Debt.objects.create(
                 user=request.user,
                 person_name=person_name,
@@ -169,16 +228,19 @@ def debt_list(request):
             )
             messages.success(request, "Record added successfully.")
             return redirect("debt_list")
-    debts = Debt.objects.filter(user=request.user).order_by("-created_at")
+        else:
+            messages.error(request, "All required fields must be filled.")
+            return redirect("debt_list")
 
-    total_borrowed = 0
-    total_lent = 0
+    debts = Debt.objects.filter(user=request.user).prefetch_related('payments').order_by("-created_at")
+
+    total_borrowed = Decimal("0")
+    total_lent = Decimal("0")
 
     for debt in debts:
         total_paid = debt.payments.aggregate(
             Sum("amount")
-        )["amount__sum"] or 0
-
+        )["amount__sum"] or Decimal("0")
         remaining = debt.amount - total_paid
 
         if debt.type == "borrowed":
@@ -189,13 +251,13 @@ def debt_list(request):
     net_balance = total_lent - total_borrowed
 
     return render(request, "tracker/debt_list.html", {
-    "debts": debts,
-    "total_borrowed": total_borrowed,
-    "total_lent": total_lent,
-    "net_balance": net_balance,
-    "sidebar_balance": net_balance,
-    "edit_mode": request.session.get("edit_mode", False),
-})
+        "debts": debts,
+        "total_borrowed": total_borrowed,
+        "total_lent": total_lent,
+        "net_balance": net_balance,
+        "sidebar_balance": net_balance,
+        "edit_mode": request.session.get("edit_mode", False),
+    })
 
 
 @login_required
@@ -203,11 +265,29 @@ def edit_debt(request, pk):
     debt = get_object_or_404(Debt, pk=pk, user=request.user)
 
     if request.method == "POST":
-        debt.person_name = request.POST.get("person_name")
-        debt.amount = request.POST.get("amount")
-        debt.type = request.POST.get("type")
-        debt.note = request.POST.get("note")
+        person_name = request.POST.get("person_name", "").strip()
+        amount_raw = request.POST.get("amount", "").strip()
+        debt_type = request.POST.get("type", "").strip()
+        note = request.POST.get("note", "").strip()
+
+        if not person_name or not amount_raw or not debt_type:
+            messages.error(request, "All required fields must be filled.")
+            return redirect("edit_debt", pk=pk)
+
+        try:
+            amount = Decimal(amount_raw)
+            if amount <= 0:
+                raise ValueError
+        except (InvalidOperation, ValueError):
+            messages.error(request, "Please enter a valid positive amount.")
+            return redirect("edit_debt", pk=pk)
+
+        debt.person_name = person_name
+        debt.amount = amount
+        debt.type = debt_type
+        debt.note = note
         debt.save()
+        messages.success(request, "Debt record updated successfully.")
         return redirect("debt_list")
 
     total_paid = debt.payments.aggregate(
@@ -225,6 +305,7 @@ def edit_debt(request, pk):
 
 
 @login_required
+@require_POST
 def delete_debt(request, pk):
     debt = get_object_or_404(Debt, pk=pk, user=request.user)
     debt.delete()
@@ -238,10 +319,12 @@ def verify_password(request):
     password = request.POST.get("password")
 
     if request.user.check_password(password):
-        request.session["edit_mode"] = True   
+        request.session["edit_mode"] = True
         return JsonResponse({"success": True})
     else:
         return JsonResponse({"success": False})
+
+
 @login_required
 def disable_edit_mode(request):
     request.session["edit_mode"] = False
@@ -279,7 +362,10 @@ def add_payment(request, pk):
 
     messages.success(request, "Payment added successfully.")
     return redirect("debt_list")
+
+
 @login_required
+@require_POST
 def delete_payment(request, pk):
     payment = get_object_or_404(DebtPayment, pk=pk, debt__user=request.user)
     payment.delete()
