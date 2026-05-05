@@ -3,7 +3,7 @@ services:
     name: expense-tracker
     env: python
     buildCommand: "./build.sh"
-    startCommand: "cd expense_tracker && gunicorn expense_tracker.wsgi:application"
+    startCommand: "gunicorn --chdir expense_tracker expense_tracker.wsgi:application"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
